@@ -5,7 +5,14 @@ using System.Threading.Tasks;
 
 namespace StationSearchCore.Service
 {
-    public class LookupService
+    //extracted to interface for mocking and possible later dependency injection
+    public interface ILookupService
+    {
+        Task<IEnumerable<string>> GetAllStartingWithAsync(string name);
+        IEnumerable<string> GetAllStartingWith(string name);
+    }
+
+    public class LookupService : ILookupService
     {
 
         public async Task<IEnumerable<string>> GetAllStartingWithAsync(string name)
@@ -22,13 +29,9 @@ namespace StationSearchCore.Service
             return prefixTree.Find(name);
         }
 
-
-
-
-
-
         private static readonly IList<string> AllStations = new List<string>
        {
+           //TODO: extract to external file
            #region stations...
            "Aberdare Rail Station",
            "Aberdour Rail Station",
@@ -2651,19 +2654,7 @@ namespace StationSearchCore.Service
             #endregion
        };
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
     public interface IPrefixTree
     {
         /// <summary>
@@ -2681,15 +2672,6 @@ namespace StationSearchCore.Service
         /// <param name="items">The terms.</param>
         void Add(IEnumerable<string> items);
     }
-
-
-
-
-
-
-
-
-
 
     public class PrefixTree : IPrefixTree
     {
@@ -2723,7 +2705,8 @@ namespace StationSearchCore.Service
                 node = child;
 
                 if (child == null)
-                    return new string[0];
+                    //mostly a stylistic choice
+                    return Array.Empty<string>();
 
                 stringBuilder.Append(prefixChar);
             }
@@ -2742,7 +2725,8 @@ namespace StationSearchCore.Service
         private void Add(string term)
         {
             if (term == null)
-                throw new ArgumentNullException("term");
+                //nameof() can help with code maintainablity
+                throw new ArgumentNullException(nameof(term));
             term = term.ToUpper();
 
             TreeNode node = head;
@@ -2776,17 +2760,15 @@ namespace StationSearchCore.Service
                 Char = c;
             }
 
-            private bool IsLeaf
-            {
-                get { return _treeNodes.Count == 0; }
-            }
+            //lambda expression is more succinct
+            private bool IsLeaf => _treeNodes.Count == 0;
 
             private char Char { get; set; }
 
             public TreeNode GetChild(char c)
             {
-                TreeNode node;
-                _treeNodes.TryGetValue(c, out node);
+                //inline the out variable
+                _treeNodes.TryGetValue(c, out var node);
                 return node;
             }
 
